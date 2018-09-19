@@ -16,11 +16,7 @@ yolo是one-stage的目标检测算法
 
 ## YOLO_tensorflow
 
-包括训练部分和测试部分
-
-### Installation
-
-1. Clone yolo_tensorflow repository
+1、包括训练部分和测试部分
 
 2. Download [Pascal VOC dataset](https://pjreddie.com/projects/pascal-voc-dataset-mirror/)
 , and put in :` ./data/pascal_voc/ `

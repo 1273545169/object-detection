@@ -104,6 +104,7 @@ class YOLONet(object):
                 net = slim.conv2d(net, 1024, 3, scope='conv_30')
                 net = tf.transpose(net, [0, 3, 1, 2], name='trans_31')
                 net = slim.flatten(net, scope='flat_32')
+                # 次层论文中没有，加入这一层可以减少参数和计算量
                 net = slim.fully_connected(net, 512, scope='fc_33')
                 net = slim.fully_connected(net, 4096, scope='fc_34')
                 net = slim.dropout(

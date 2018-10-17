@@ -4,6 +4,7 @@ yolo是one-stage的目标检测算法
 
 [yolov1源码解析](https://blog.csdn.net/baidu_27643275/article/details/82794559)
 
+(源码参考：https://github.com/hizhangp/yolo_tensorflow和https://github.com/xiaohu2015/DeepLearning_tutorials/tree/master/ObjectDetections/yolo)
 
 ## YOLO_tensorflow
 

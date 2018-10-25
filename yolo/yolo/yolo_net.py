@@ -104,7 +104,6 @@ class YOLONet(object):
                 net = slim.conv2d(net, 1024, 3, scope='conv_30')
                 net = tf.transpose(net, [0, 3, 1, 2], name='trans_31')
                 net = slim.flatten(net, scope='flat_32')
-                # 次层论文中没有，加入这一层可以减少参数和计算量
                 net = slim.fully_connected(net, 512, scope='fc_33')
                 net = slim.fully_connected(net, 4096, scope='fc_34')
                 net = slim.dropout(
@@ -124,6 +123,7 @@ class YOLONet(object):
           iou: 4-D tensor [BATCH_SIZE, CELL_SIZE, CELL_SIZE, BOXES_PER_CELL]
         """
         with tf.variable_scope(scope):
+
             # transform (x_center, y_center, w, h) to (x1, y1, x2, y2)
             # shape(7,7,2,4)
             boxes1_t = tf.stack([boxes1[..., 0] - boxes1[..., 2] / 2.0,
@@ -174,7 +174,7 @@ class YOLONet(object):
 
             # 实际值
             # shape(45,7,7,1)
-            # response中的值为0或者1.存在目标为1，不存在目标为0.
+            # response中的值为0或者1.对应的网格中存在目标为1，不存在目标为0.
             # 存在目标指的是存在目标的中心点，并不是说存在目标的一部分。所以，目标的中心点所在的cell其对应的值才为1，其余的值均为0
             response = tf.reshape(
                 labels[..., 0],
@@ -215,14 +215,14 @@ class YOLONet(object):
             # shape(45,7,7,1), find the maximum iou_predict_truth in every cell
             # 在训练时，如果该单元格内确实存在目标，那么只选择IOU最大的那个边界框来负责预测该目标，而其它边界框认为不存在目标
             object_mask = tf.reduce_max(iou_predict_truth, 3, keep_dims=True)
-            # object prosibility (45,7,7,2)
-            object_probs = tf.cast(
+            # object probs (45,7,7,2)
+            object_mask = tf.cast(
                 (iou_predict_truth >= object_mask), tf.float32) * response
 
             # calculate no_I tensor [CELL_SIZE, CELL_SIZE, BOXES_PER_CELL]
-            # noobject prosibility(45,7,7,2)
+            # noobject confidence(45,7,7,2)
             noobject_probs = tf.ones_like(
-                object_probs, dtype=tf.float32) - object_probs
+                object_mask, dtype=tf.float32) - object_mask
 
             # shape(45,7,7,2,4)，对boxes的四个值进行规整，xy为相对于网格左上角，wh为取根号后的值，范围0~1
             boxes_tran = tf.stack(
@@ -239,7 +239,7 @@ class YOLONet(object):
 
             # object_loss  confidence=iou*p(object)
             # p(object)的值为1或0
-            object_delta = object_probs * (predict_confidence - iou_predict_truth)
+            object_delta = object_mask * (predict_confidence - iou_predict_truth)
             object_loss = tf.reduce_mean(
                 tf.reduce_sum(tf.square(object_delta), axis=[1, 2, 3]),
                 name='object_loss') * self.object_scale
@@ -251,7 +251,7 @@ class YOLONet(object):
                 name='noobject_loss') * self.noobject_scale
 
             # coord_loss
-            coord_mask = tf.expand_dims(object_probs, 4)
+            coord_mask = tf.expand_dims(object_mask, 4)
             boxes_delta = coord_mask * (predict_boxes - boxes_tran)
             coord_loss = tf.reduce_mean(
                 tf.reduce_sum(tf.square(boxes_delta), axis=[1, 2, 3, 4]),

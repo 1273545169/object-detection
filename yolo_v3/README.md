@@ -11,7 +11,9 @@ yolo系列解析：https://blog.csdn.net/baidu_27643275/article/details/82964784
 
 ## 运行:   
 1、下载权重：https://pjreddie.com/darknet/yolo/
+
 2、运行covert_weight.py将yolo官方提供的.weight文件转换为.ckpt形式
+
 3、运行predict.py文件进行目标检测
 
 

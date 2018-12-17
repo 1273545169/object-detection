@@ -30,33 +30,44 @@ def main(argv=None):
         # normalize values to range [0..1]
         inputs = inputs / 255
 
-    with tf.variable_scope('detector'):
-        # placeholder for detector inputs
-        inputs_placeholder = tf.placeholder(tf.float32, [None, FLAGS.size, FLAGS.size, 3])
-        scale = yolo_v3(inputs_placeholder, len(classes), data_format='NHWC')
-        img_size = inputs_placeholder.shape.as_list()[1:3]
-        detections = decode_output(scale, len(classes), img_size)
-        boxes = correct_boxes(detections)
-
     with tf.Session() as sess:
-        # # 从.weight文件中加载权重
-        # load_ops = load_weights(tf.global_variables(scope='detector'), FLAGS.weights_file)
-        # sess.run(load_ops)
 
-        # 从ckpt文件中加载权重
-        saver = tf.train.Saver()
-        saver.restore(sess, FLAGS.ckpt_file)
+        if  not FLAGS.pb_file:
 
-        detected_boxes = sess.run(boxes, feed_dict={inputs_placeholder: inputs})
+            # placeholder for detector inputs
+            inputs_placeholder = tf.placeholder(tf.float32, [None, FLAGS.size, FLAGS.size, 3])
+            scale = yolo_v3(inputs_placeholder, len(classes), data_format='NHWC')
+            img_size = inputs_placeholder.shape.as_list()[1:3]
+            detections = decode_output(scale, len(classes), img_size)
+            boxes = correct_boxes(detections)
+
+            # # 从.weight文件中加载权重
+            # load_ops = load_weights(tf.global_variables(scope='detector'), FLAGS.weights_file)
+            # sess.run(load_ops)
+
+            # 从ckpt文件中加载权重
+            saver = tf.train.Saver()
+            saver.restore(sess, FLAGS.ckpt_file)
+
+            detected_boxes = sess.run(boxes, feed_dict={inputs_placeholder: inputs})
+
+        else:
+            restore_weight_from_pbfile(FLAGS.pb_file)
+
+            inputs_placeholder = tf.get_default_graph().get_tensor_by_name('inputs:0')
+            boxes=tf.get_default_graph().get_tensor_by_name('output_boxes:0')
+
+            detected_boxes = sess.run(boxes, feed_dict={inputs_placeholder: inputs})
+
 
         num_object, classes_in, boxes, scores = _non_max_suppression(detected_boxes, classes,
                                                                      score_threshold=FLAGS.conf_threshold,
                                                                      iou_threshold=FLAGS.iou_threshold)
 
         print("{}个目标：{}".format(num_object, np.array(classes)[classes_in]))
+        print(scores)
 
-        _draw_box(num_object, classes_in, boxes, scores, img, FLAGS.size, classes,FLAGS.output_img)
-
+        _draw_box(num_object, classes_in, boxes, scores, img, FLAGS.size, classes, FLAGS.output_img)
 
 if __name__ == '__main__':
     tf.app.run()

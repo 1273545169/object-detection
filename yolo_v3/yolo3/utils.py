@@ -175,10 +175,20 @@ def load_weights1(var_list, weights_file):
 
 
 def save_weight_to_pbfile(sess, weight_file):
+
     # 导出当前图的GraphDef部分即可完成从输入层到输出层的计算过程
     graph_def = tf.get_default_graph().as_graph_def()
     output_graph_def = tf.graph_util.\
-        convert_variables_to_constants(sess, graph_def, output_node_names=["detector/yolo-v3/..."])
+        convert_variables_to_constants(sess, graph_def,
+                                       output_node_names=["output_boxes","inputs"])
     with tf.gfile.GFile(weight_file, "wb") as f:
         f.write(output_graph_def.SerializeToString())
+
+
+def restore_weight_from_pbfile(weight_file):
+
+    with tf.gfile.GFile(weight_file, "rb") as f:
+        graph_def = tf.GraphDef()
+        graph_def.ParseFromString(f.read())
+        tf.import_graph_def(graph_def, name="")
 

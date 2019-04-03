@@ -6,7 +6,7 @@ yolo系列解析：https://blog.csdn.net/baidu_27643275/article/details/82964784
 - [x] YOLO_v3 网络
 - [x] covert_weight（将yolo官方提供的.weight文件转换为.ckpt形式来保存权重）
 - [x] 预测过程
-- [x] 训练过程
+- [] 训练过程
 
 ## 运行:   
 1、下载权重：https://pjreddie.com/darknet/yolo/
